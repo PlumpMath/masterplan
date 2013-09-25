@@ -499,6 +499,19 @@ goog.base = function(me, opt_methodName, var_args) {
 goog.scope = function(fn) {
   fn.call(goog.global)
 };
+goog.provide("goog.debug.Error");
+goog.debug.Error = function(opt_msg) {
+  if(Error.captureStackTrace) {
+    Error.captureStackTrace(this, goog.debug.Error)
+  }else {
+    this.stack = (new Error).stack || ""
+  }
+  if(opt_msg) {
+    this.message = String(opt_msg)
+  }
+};
+goog.inherits(goog.debug.Error, Error);
+goog.debug.Error.prototype.name = "CustomError";
 goog.provide("goog.string");
 goog.provide("goog.string.Unicode");
 goog.string.Unicode = {NBSP:"\u00a0"};
@@ -939,19 +952,6 @@ goog.string.parseInt = function(value) {
   }
   return NaN
 };
-goog.provide("goog.debug.Error");
-goog.debug.Error = function(opt_msg) {
-  if(Error.captureStackTrace) {
-    Error.captureStackTrace(this, goog.debug.Error)
-  }else {
-    this.stack = (new Error).stack || ""
-  }
-  if(opt_msg) {
-    this.message = String(opt_msg)
-  }
-};
-goog.inherits(goog.debug.Error, Error);
-goog.debug.Error.prototype.name = "CustomError";
 goog.provide("goog.asserts");
 goog.provide("goog.asserts.AssertionError");
 goog.require("goog.debug.Error");
@@ -31824,8 +31824,106 @@ goog.require("masterplan.communicator");
 goog.require("cljs.reader");
 goog.require("goog.net.XhrIo");
 goog.require("dommy.core");
-masterplan.core.hello = function hello() {
+masterplan.core.hello = function hello(state) {
   return alert("Hello from cljs!")
+};
+masterplan.core.duration = function duration(p__6032) {
+  var map__6034 = p__6032;
+  var map__6034__$1 = cljs.core.seq_QMARK_.call(null, map__6034) ? cljs.core.apply.call(null, cljs.core.hash_map, map__6034) : map__6034;
+  var out = cljs.core.get.call(null, map__6034__$1, new cljs.core.Keyword(null, "out", "out", 1014014656));
+  var in$ = cljs.core.get.call(null, map__6034__$1, new cljs.core.Keyword(null, "in", "in", 1013907607));
+  return(new cljs.core.Keyword(null, "ts", "ts", 1013907953)).call(null, out).getTime() - (new cljs.core.Keyword(null, "ts", "ts", 1013907953)).call(null, in$).getTime()
+};
+masterplan.core.task_timeline = function task_timeline(parent, task) {
+  var map__6036 = task;
+  var map__6036__$1 = cljs.core.seq_QMARK_.call(null, map__6036) ? cljs.core.apply.call(null, cljs.core.hash_map, map__6036) : map__6036;
+  var bgcolor = cljs.core.get.call(null, map__6036__$1, new cljs.core.Keyword(null, "bgcolor", "bgcolor", 838597040));
+  var out = cljs.core.get.call(null, map__6036__$1, new cljs.core.Keyword(null, "out", "out", 1014014656));
+  var in$ = cljs.core.get.call(null, map__6036__$1, new cljs.core.Keyword(null, "in", "in", 1013907607));
+  var id = cljs.core.get.call(null, map__6036__$1, new cljs.core.Keyword(null, "id", "id", 1013907597));
+  var pdur = masterplan.core.duration.call(null, parent);
+  var rel_offset = ((new cljs.core.Keyword(null, "ts", "ts", 1013907953)).call(null, in$).getTime() - (new cljs.core.Keyword(null, "ts", "ts", 1013907953)).call(null, (new cljs.core.Keyword(null, "in", "in", 1013907607)).call(null, parent)).getTime()) / pdur * 100;
+  var rel_width = masterplan.core.duration.call(null, task) / pdur * 100;
+  return cljs.core.PersistentVector.fromArray([new cljs.core.Keyword(null, "div", "div", 1014003715), cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "id", "id", 1013907597), id, new cljs.core.Keyword(null, "style", "style", 1123684643), dommy.core.style_str.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "position", "position", 1761709211), "relative", new cljs.core.Keyword(null, "top", "top", 1014019271), "30px", new cljs.core.Keyword(null, "left", 
+  "left", 1017222009), [cljs.core.str(rel_offset), cljs.core.str("%")].join(""), new cljs.core.Keyword(null, "width", "width", 1127031096), [cljs.core.str(rel_width), cljs.core.str("%")].join(""), new cljs.core.Keyword(null, "height", "height", 4087841945), "30px", new cljs.core.Keyword(null, "background-color", "background-color", 1619226998), bgcolor], true))], true)], true)
+};
+masterplan.core.children = function children(state, task) {
+  return cljs.core.vals.call(null, cljs.core.select_keys.call(null, state, (new cljs.core.Keyword(null, "timeline", "timeline", 3232221107)).call(null, task)))
+};
+masterplan.core.task_dom = function task_dom(state, parent, task) {
+  return cljs.core.conj.call(null, masterplan.core.task_timeline.call(null, parent, task), cljs.core.map.call(null, function(p1__6037_SHARP_) {
+    return task_dom.call(null, state, task, p1__6037_SHARP_)
+  }, masterplan.core.children.call(null, state, task)))
+};
+masterplan.core.add_actions_BANG_ = function add_actions_BANG_(state, task) {
+  var node = document.querySelector(dommy.core.selector.call(null, [cljs.core.str("#"), cljs.core.str((new cljs.core.Keyword(null, "id", "id", 1013907597)).call(null, task))].join("")));
+  var tooltip = cljs.core.gensym.call(null, "tooltip_");
+  dommy.core.listen_BANG_.call(null, node, new cljs.core.Keyword(null, "mouseover", "mouseover", 1601081963), function(e) {
+    return dommy.core.append_BANG_.call(null, document.body, cljs.core.PersistentVector.fromArray([new cljs.core.Keyword(null, "div", "div", 1014003715), cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "id", "id", 1013907597), tooltip, new cljs.core.Keyword(null, "style", "style", 1123684643), dommy.core.style_str.call(null, cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "postition", "postition", 3026105807), "fixed", new cljs.core.Keyword(null, "z-index", 
+    "z-index", 3303828785), "10", new cljs.core.Keyword(null, "left", "left", 1017222009), [cljs.core.str(e.clientX), cljs.core.str("px")].join(""), new cljs.core.Keyword(null, "top", "top", 1014019271), [cljs.core.str(e.clientY), cljs.core.str("px")].join("")], true))], true), (new cljs.core.Keyword(null, "id", "id", 1013907597)).call(null, task)], true))
+  });
+  var seq__6042 = cljs.core.seq.call(null, masterplan.core.children.call(null, state, task));
+  var chunk__6043 = null;
+  var count__6044 = 0;
+  var i__6045 = 0;
+  while(true) {
+    if(i__6045 < count__6044) {
+      var c = cljs.core._nth.call(null, chunk__6043, i__6045);
+      add_actions_BANG_.call(null, state, c);
+      var G__6046 = seq__6042;
+      var G__6047 = chunk__6043;
+      var G__6048 = count__6044;
+      var G__6049 = i__6045 + 1;
+      seq__6042 = G__6046;
+      chunk__6043 = G__6047;
+      count__6044 = G__6048;
+      i__6045 = G__6049;
+      continue
+    }else {
+      var temp__4092__auto__ = cljs.core.seq.call(null, seq__6042);
+      if(temp__4092__auto__) {
+        var seq__6042__$1 = temp__4092__auto__;
+        if(cljs.core.chunked_seq_QMARK_.call(null, seq__6042__$1)) {
+          var c__3563__auto__ = cljs.core.chunk_first.call(null, seq__6042__$1);
+          var G__6050 = cljs.core.chunk_rest.call(null, seq__6042__$1);
+          var G__6051 = c__3563__auto__;
+          var G__6052 = cljs.core.count.call(null, c__3563__auto__);
+          var G__6053 = 0;
+          seq__6042 = G__6050;
+          chunk__6043 = G__6051;
+          count__6044 = G__6052;
+          i__6045 = G__6053;
+          continue
+        }else {
+          var c = cljs.core.first.call(null, seq__6042__$1);
+          add_actions_BANG_.call(null, state, c);
+          var G__6054 = cljs.core.next.call(null, seq__6042__$1);
+          var G__6055 = null;
+          var G__6056 = 0;
+          var G__6057 = 0;
+          seq__6042 = G__6054;
+          chunk__6043 = G__6055;
+          count__6044 = G__6056;
+          i__6045 = G__6057;
+          continue
+        }
+      }else {
+        return null
+      }
+    }
+    break
+  }
+};
+masterplan.core.init_view_BANG_ = function init_view_BANG_(state) {
+  var main = state.call(null, (new cljs.core.Keyword(null, "main", "main", 1017248043)).call(null, state));
+  dommy.core.append_BANG_.call(null, document.getElementById("plan"), masterplan.core.task_dom.call(null, state, main, main));
+  return masterplan.core.add_actions_BANG_.call(null, state, main)
+};
+masterplan.core.demo_state = function demo_state() {
+  return cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "main", "main", 1017248043), "masterplan", "masterplan", cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "id", "id", 1013907597), "masterplan", new cljs.core.Keyword(null, "in", "in", 1013907607), cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "ts", "ts", 1013907953), new Date(2013, 10, 1), new cljs.core.Keyword(null, "desc", "desc", 1016984067), "Startbedingungen sind ..."], true), 
+  new cljs.core.Keyword(null, "out", "out", 1014014656), cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "ts", "ts", 1013907953), new Date(2013, 10, 31), new cljs.core.Keyword(null, "desc", "desc", 1016984067), "Endbedingungen sind ..."], true), new cljs.core.Keyword(null, "bgcolor", "bgcolor", 838597040), "red", new cljs.core.Keyword(null, "visible", "visible", 1480647652), true, new cljs.core.Keyword(null, "timeline", "timeline", 3232221107), cljs.core.PersistentVector.fromArray(["tagesplan"], 
+  true)], true), "tagesplan", cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "id", "id", 1013907597), "tagesplan", new cljs.core.Keyword(null, "in", "in", 1013907607), cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, "ts", "ts", 1013907953), new Date(2013, 10, 5), new cljs.core.Keyword(null, "desc", "desc", 1016984067), "Morgens"], true), new cljs.core.Keyword(null, "out", "out", 1014014656), cljs.core.PersistentArrayMap.fromArray([new cljs.core.Keyword(null, 
+  "ts", "ts", 1013907953), new Date(2013, 10, 6), new cljs.core.Keyword(null, "desc", "desc", 1016984067), "Abends"], true), new cljs.core.Keyword(null, "bgcolor", "bgcolor", 838597040), "blue", new cljs.core.Keyword(null, "timeline", "timeline", 3232221107), cljs.core.PersistentVector.EMPTY], true)], true)
 };
 goog.provide("goog.net.xpc");
 goog.provide("goog.net.xpc.CfgFields");
