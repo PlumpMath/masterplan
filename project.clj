@@ -1,35 +1,23 @@
-(defproject masterplan "0.1.0-SNAPSHOT"
-  :description "Task management web-app."
-  :url "http://example.com/FIXME"
-  :license {:name "AGPL v3"}
+(defproject masterplan "0.0.1-SNAPSHOT"
+  :description "FIXME: write description"
   :dependencies [[org.clojure/clojure "1.5.1"]
-                 [org.clojure/clojurescript "0.0-1889"]
-                 [com.cemerick/piggieback "0.1.0"]
-                 [fogus/bacwn "0.3.0"]
-                 [org.clojure/core.async "0.1.0-SNAPSHOT"]
-                 [prismatic/dommy "0.1.2"]]
-  :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
-  :repositories {"sonatype-oss-public" "https://oss.sonatype.org/content/groups/public/"}
-  :hooks [leiningen.cljsbuild]
-  :plugins [[lein-cljsbuild "0.3.3"]]
-  :cljsbuild {
-                                        ; Configure the REPL support; see the README.md file for more details.
-              :repl-listen-port 9011
-              :repl-launch-commands
-                                        ; Launch command for connecting the page of choice to the REPL.
-                                        ; Only works if the page at URL automatically connects to the REPL,
-                                        ; like http://localhost:3000/repl-demo does.
-                                        ;     $ lein trampoline cljsbuild repl-launch firefox <URL>
-              {"firefox" ["firefox"
-                          :stdout ".repl-firefox-out"
-                          :stderr ".repl-firefox-err"]
-               }
-              :builds {
-                                        ; This build has the lowest level of optimizations, so it is
-                                        ; useful when debugging the app.
-                       :dev
-                       {:source-paths ["src"]
-                        :jar true
-                        :compiler {:output-to "resources/public/js/main-debug.js"
-                                   :optimizations :whitespace
-                                   :pretty-print true}}}})
+                 [org.clojure/clojurescript "0.0-1835"]
+                 [domina "1.0.1"]
+                 [ch.qos.logback/logback-classic "1.0.7" :exclusions [org.slf4j/slf4j-api]]
+                 [io.pedestal/pedestal.app "0.2.1"]
+                 [io.pedestal/pedestal.app-tools "0.2.1"]
+                 [com.cemerick/piggieback "0.1.0"]]
+  :min-lein-version "2.0.0"
+  :source-paths ["app/src" "app/templates"]
+  :resource-paths ["config"]
+  :target-path "out/"
+  :repl-options  {:init-ns user
+                  :init (try
+                          (use 'io.pedestal.app-tools.dev)
+                          (catch Throwable t
+                            (println "ERROR: There was a problem loading io.pedestal.app-tools.dev")
+                            (clojure.stacktrace/print-stack-trace t)
+                            (println)))
+                  :welcome (println "Welcome to pedestal-app! Run (tools-help) to see a list of useful functions.")
+                  :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
+  :main ^{:skip-aot true} io.pedestal.app-tools.dev)

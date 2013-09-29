@@ -1,14 +1,15 @@
 # masterplan
 
-A ClojureScript planning application
+A collective planning application aimed at scalability implementing lessons learned from designing processes with the lambda calculus.
 
 ## Usage
 
-Load a piggyback-REPL.
+To start the app server from a repl, see [this
+usage](https://github.com/pedestal/pedestal/tree/master/app#usage)
 
-## License
+To start the app server from the commandline: `lein run`.
 
-Copyright © 2013 FIXME
+## Links
 
-Distributed under the Eclipse Public License either version 1.0 or (at
-your option) any later version.
+* [Overview of how pedestal-app works](http://pedestal.io/documentation/application-overview/)
+* [Comprehensive tutorial for pedestal-app](https://github.com/pedestal/app-tutorial)
