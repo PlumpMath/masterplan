@@ -40,9 +40,7 @@
     ;; Start the application
     (app/begin app)
     ;; Send a message to the application so that it does something.
-    (p/put-message (:input app) {msg/type :set-value msg/topic [:parent] :value "Hello Parent!"})
-    (p/put-message (:input app) {msg/type :set-value msg/topic [:main] :value "Hello Main!"})
-    (p/put-message (:input app) {msg/type :set-value msg/topic [:children] :value ["Hello Child1!" "Hello Child2!"]})
+    (p/put-message (:input app) {msg/type :select msg/topic [:selected] :select "Monatsplan"})
     ;; Returning the app and app-model from the main function allows
     ;; the tooling to add support for useful features like logging
     ;; and recording.
