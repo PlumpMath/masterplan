@@ -4,7 +4,8 @@
             [io.pedestal.app.render.events :as events]
             [io.pedestal.app.render.push :as render]
             [io.pedestal.app.render.push.templates :as templates]
-            [io.pedestal.app.render.push.handlers.automatic :as d])
+            [io.pedestal.app.render.push.handlers.automatic :as d]
+            [io.pedestal.app.messages :as msg])
   (:require-macros [masterplan.html-templates :as html-templates]))
 
 ;; Load templates.
@@ -45,11 +46,13 @@
   ;; This function responds to a :value event. It uses the
   ;; `update-t` function to update the template at `path` with the new
   ;; values in the passed map.
-  (templates/update-t renderer path {:message (:id new-value)}))
+  (templates/update-t renderer path {:message (:id new-value)
+                                     :start (if new-value (.toLocaleString (:start new-value)))
+                                     :end (if new-value (.toLocaleString (:end new-value)))}))
 
 (defn render-children [renderer [_ path _ new-value] transmitter]
   (let [child-html (templates/add-template renderer path (:child templates))
-        parent (render/get-parent-id renderer (rest path))]
+        parent-node (render/get-parent-id renderer (rest path))]
     (dom/destroy! (dom/by-class :child)) ; destroy all previous children
     (doseq [child new-value]
       (let [id (:id child)
@@ -58,18 +61,20 @@
             parent-timespan (- (:end parent-value) (:start parent-value))
             timespan (- (:end child) (:start child))
             offset (- (:start child) (:start parent-value))]
-        (dom/append! (dom/by-id parent) node)
+        (dom/append! (dom/by-id parent-node) node)
         (dom/set-styles! node {:margin-left (str (* 100. (/ offset parent-timespan)) "%")
                                :width (str (* 100. (/ timespan parent-timespan)) "%")})))))
 
 (defn add-handler [renderer [_ path transform-name messages] input-queue]
-  (js/console.log "adding handler")
-  (domev/listen! (dom/by-class :child) :click
-                 (fn [p]
-                   (events/send-transforms input-queue
-                                           transform-name
-                                           messages
-                                           {:value p}))))
+  (doseq [tl (dom/nodes (dom/by-class "timeline"))]
+    (events/send-on :click
+                    tl
+                    input-queue
+                    (fn []
+                      ; extract id from inner content for now TODO
+                      (msg/fill transform-name
+                                messages
+                                {:select (.-innerHTML (second (dom/children tl)))})))))
 
 ;; The data structure below is used to map rendering data to functions
 ;; which handle rendering for that specific change. This function is
@@ -77,7 +82,7 @@
 ;; be used from the tool's "render" view.
 
 (defn render-config []
-  [;; All :node-create deltas for the node at :greeting will
+  [ ;; All :node-create deltas for the node at :greeting will
    ;; be rendered by the `render-page` function. The node name
    ;; :greeting is a default name that is used when we don't
    ;; provide our own derives and emits. To name your own nodes,
@@ -88,13 +93,15 @@
    ;; library function `d/default-exit`.
    [:node-destroy   [:plan :parent] d/default-exit]
    [:node-destroy   [:plan :main] d/default-exit]
+   [:node-destroy   [:plan :children] d/default-exit]
    ;; All :value deltas for this path will be handled by the
    ;; function `render-message`.
    [:value [:plan :parent] render-message]
    [:value [:plan :main] render-message]
    [:value [:plan :children] render-children]
 
-   #_[:transform-enable [:plan :selected] add-handler]])
+   [:transform-enable [:plan :form :select] add-handler]
+   [:transform-disable [:plan :form :select] add-handler]])
 
 ;; In render-config, paths can use wildcard keywords :* and :**. :*
 ;; means exactly one segment with any value. :** means 0 or more

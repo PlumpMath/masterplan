@@ -69,7 +69,17 @@
           [#{[:parent]
              [:main]
              [:children]
-             [:selected]} (app/default-emitter [:plan])]]})
+             [:selected]}
+           (fn [inputs]
+             (concat ((app/default-emitter [:plan]) inputs)
+                     [[:transform-disable
+                       [:plan :form :select]
+                       :select
+                       [{msg/topic [:selected] (msg/param :select) ""}]]
+                      [:transform-enable
+                       [:plan :form :select]
+                       :select
+                       [{msg/topic [:selected] (msg/param :select) ""}]]]))]]})
 
 ;; Once this behavior works, run the Data UI and record
 ;; rendering data which can be used while working on a custom
