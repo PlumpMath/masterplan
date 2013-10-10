@@ -5,7 +5,8 @@
             [io.pedestal.app.render :as render]
             [io.pedestal.app.messages :as msg]
             [masterplan.behavior :as behavior]
-            [masterplan.rendering :as rendering]))
+            [masterplan.rendering :as rendering]
+            [masterplan.services :refer [services-fn]]))
 
 ;; In this namespace, the application is built and started.
 
@@ -35,7 +36,7 @@
         app-model (render/consume-app-model app render-fn)]
     ;; If services existed, configure the application to send all
     ;; effects there.
-    ;; (app/consume-effects app services-fn)
+    (app/consume-effects app services-fn)
     ;;
     ;; Start the application
     (app/begin app)

@@ -47,8 +47,8 @@
   ;; `update-t` function to update the template at `path` with the new
   ;; values in the passed map.
   (templates/update-t renderer path {:message (:id new-value)
-                                     :start (if new-value (.toLocaleString (:start new-value)))
-                                     :end (if new-value (.toLocaleString (:end new-value)))}))
+                                     :start (when new-value (.toLocaleString (:start new-value)))
+                                     :end (when new-value (.toLocaleString (:end new-value)))}))
 
 (defn render-children [renderer [_ path _ new-value] transmitter]
   (let [child-html (templates/add-template renderer path (:child templates))
@@ -82,7 +82,7 @@
 ;; be used from the tool's "render" view.
 
 (defn render-config []
-  [ ;; All :node-create deltas for the node at :greeting will
+  [;; All :node-create deltas for the node at :greeting will
    ;; be rendered by the `render-page` function. The node name
    ;; :greeting is a default name that is used when we don't
    ;; provide our own derives and emits. To name your own nodes,

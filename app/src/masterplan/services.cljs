@@ -1,4 +1,7 @@
-(ns masterplan.services)
+(ns masterplan.services
+  (:require [masterplan.indexeddb :as idb]
+            [io.pedestal.app.protocols :refer [put-message]]
+            [io.pedestal.app.messages :as msg]))
 
 ;; The services namespace responsible for communicating with back-end
 ;; services. It receives messages from the application's behavior,
@@ -18,15 +21,45 @@
 ;; A very simple example of a services function which echoes all events
 ;; back to the behavior is shown below.
 
-(comment
+(def db nil)
 
-  ;; The services implementation will need some way to send messages
-  ;; back to the application. The queue passed to the services function
-  ;; will convey messages to the application.
-  (defn echo-services-fn [message queue]
-    (put-message queue message))
+(defn services-fn [message queue]
+  (if-not db (idb/open-database! "masterplan" 1
+                                 (fn [{:keys [db-opened]}]
+                                   (when db-opened
+                                     (def db db-opened)
+                                     (services-fn message queue))))
+          (when-let [key (:requested-key message)]
+            (idb/-get db
+                      key
+                      (fn [{{:keys [parent children] :as mresult} :result}]
+                        (when mresult
+                                        ; clear
+                          (put-message queue {msg/topic [:children] msg/type :set-value :value []})
+                          (put-message queue {msg/topic [:parent] msg/type :set-value :value nil})
+                          (when parent
+                            (idb/-get db
+                                      parent
+                                      (fn [{:keys [result]}]
+                                        (when result
+                                          (put-message queue {msg/topic [:parent]
+                                                              msg/type :set-value
+                                                              :value result}))
+                                        (put-message queue {msg/topic [:main]
+                                                              msg/type :set-value
+                                                              :value mresult}))))
+                          (when children
+                            (doseq [child children]
+                              (idb/-get db
+                                        child
+                                        (fn [{:keys [result]}]
+                                          (when result
+                                            (put-message queue {msg/topic [:children]
+                                                                msg/type :add-value
+                                                                :value (assoc result :parent mresult)}))))))))))))
 
-  )
+
+
 
 ;; During development, it is helpful to implement services which
 ;; simulate communication with the real services. This implementation
